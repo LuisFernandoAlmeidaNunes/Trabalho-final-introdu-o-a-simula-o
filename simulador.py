@@ -35,10 +35,16 @@ class Simulacao:
         return pedido
 
     #sorteio do tempo de deslocamento em meio urbano por um caminhão de frota privada
-    def sorteia_tempo_urbano_privado(self):
+
+    #
+    # Precisa passar as porcentagens para os parâmetros
+    #
+
+
+    def sorteia_tempo_urbano_privado(self, mean, sigma):
         
         # tempo de deslocamento em cidade
-        tempo = int(np.random.lognormal(mean=50, sigma=30, size=None))
+        tempo = int(np.random.lognormal(mean=50, sigma=30, size=None))  
 
         # chance de algum imprevisto ocorrer no deslocamento na cidade
         if np.random.randint(1, 100) > 95:
@@ -46,7 +52,10 @@ class Simulacao:
 
         return tempo
     
-    
+    #
+    # Precisa implementar a distribuição burr (está no documento relatoria de distribuições no drive), 
+    #
+
     #sorteio do tempo de deslocamento em meio urbano por um caminhão de frota privada
     def sorteia_tempo_rodoviario_privado(self):
         
@@ -59,19 +68,25 @@ class Simulacao:
 
         return tempo
     
-    def plotar_histogramas_cenarios(self, salvar=False):
+    
+    # PENDENTE
+    # implementar o bloco de PARADAS(pert), CARGA(pert) e DESCARGA(pert) do diagrama, todas as distribuições estão no relatorio
+    #
+    
+    # def plotar_histogramas_cenarios(self, salvar=False):
 
-        if salvar:
-            plt.savefig("histogramas_cenarios.png", dpi=200, bbox_inches='tight')
+    #     if salvar:
+    #         plt.savefig("histogramas_cenarios.png", dpi=200, bbox_inches='tight')
 
-        plt.show()
+    #     plt.show()
         
 
 
 if __name__ == "__main__":
     s = Simulacao()
-    a = []
+    
     print(s.inicia_pedido())
+
     # while len(a) < 100:
     #     a.append(s.inicia_pedido())
 
