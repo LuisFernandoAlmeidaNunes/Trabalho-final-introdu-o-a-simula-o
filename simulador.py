@@ -1,23 +1,30 @@
 import matplotlib.pyplot as plt
+import scipy
 import numpy as np
 
 class Simulacao:
+
+    def inicia_frota(self, mean, sigma):
+        # inicializando motorista
+        motorista = {
+            "disponivel" : 1
+        }
+        # inicializando caminhao
+        caminhao = {
+            "disponivel" : 1,
+            "chance_defeito" : 5 
+        }
 
     #Primeira parte do DCA
     def inicia_pedido(self):
 
         # inicializando pedido
-        pedido = {
-            "nos" : 0,
-            "restricao" : 1000
-        }
-
         # Gera um float na Normal, arredonda para coletar o numero de nos de uma rota de um pedido
         # de 1 a 10 nós
-        
-        pedido["nos"] = int(
-            np.random.normal(loc=5, scale=2, size=None)
-        )
+        pedido = {
+            "nos" : int( np.random.normal(loc=5, scale=2, size=None)),
+            "restricao" : 1000
+        }
         
         if np.random.randint(1,10) > 9:
             r = np.random.randint(1,3)
@@ -34,88 +41,82 @@ class Simulacao:
 
         return pedido
 
-    #sorteio do tempo de deslocamento em meio urbano por um caminhão de frota privada
+    #sorteio do tempo de deslocamento em meio urbano por um caminhão
+    def pert(self, o, m, p, lamb):
 
-    #
-    # Precisa passar as porcentagens para os parâmetros
-    #
+            alpha = 1 + lamb * ((m - o) / (p - o))
+            beta = 1 + lamb * ((p - m) / (p - o))
+            
+            x = np.random.beta(alpha, beta, 0, 1)
 
+            tempo = o + x * (p - o)
 
-    def sorteia_tempo_urbano_privado(self, mean, sigma):
+            return  tempo
+    def sorteia_tempo_urbano(self, mean, sigma, chance_problema):
         
         # tempo de deslocamento em cidade
-        tempo = int(np.random.lognormal(mean=50, sigma=30, size=None))  
+        tempo = int(np.random.lognormal(mean=mean, sigma=sigma, size=None))  
 
         # chance de algum imprevisto ocorrer no deslocamento na cidade
-        if np.random.randint(1, 100) > 95:
+        if np.random.randint(1, 100) < chance_problema:
             tempo += np.random.lognormal(mean=120, sigma=60, size=None)
 
         return tempo
-    
-    #
-    # Precisa implementar a distribuição burr (está no documento relatoria de distribuições no drive), 
-    #
 
     #sorteio do tempo de deslocamento em meio urbano por um caminhão de frota privada
-    def sorteia_tempo_rodoviario_privado(self):
+    def sorteia_tempo_rodoviario(self, c, d, scale, chance_problema, chance_parada):
         
-        # tempo de deslocamento em cidade
-        tempo = np.random.
+        # tempo de deslocamento em rodovia
+        tempo = scipy.stats.burr(c, d, loc=0, scale=scale)
 
-        # chance de algum imprevisto ocorrer no deslocamento na cidade
-        if np.random.randint(1, 100) > 95:
+        # chance de algum imprevisto ocorrer no deslocamento em rodovia
+        if np.random.randint(1, 100) < chance_problema:
             tempo += np.random.lognormal(mean=120, sigma=60, size=None)
+
+        # chance do nó ser uma parada
+        if np.random.randint(1, 100) < chance_parada:
+            tempo += self.sorteia_parada()
 
         return tempo
     
+    def sorteia_parada(self, tempo_o, tempo_m, tempo_p):
+
+        # tempo de manobra + planejamento
+        tempo = 45
+
+        #sorteia tempo de descarga
+        tempo += self.pert(tempo_o, tempo_m, tempo_p, 4)
     
-    # PENDENTE
-    # implementar o bloco de PARADAS(pert), CARGA(pert) e DESCARGA(pert) do diagrama, todas as distribuições estão no relatorio
-    #
+        #sorteia tempo de carga
+        tempo += self.pert(tempo_o, tempo_m, tempo_p, 4)
+
+        return tempo 
     
-    # def plotar_histogramas_cenarios(self, salvar=False):
+    def sorteia_carga(self, tempo_o, tempo_m, tempo_p):
 
-    #     if salvar:
-    #         plt.savefig("histogramas_cenarios.png", dpi=200, bbox_inches='tight')
+        # tempo de manobra + planejamento
+        tempo = 45
 
-    #     plt.show()
-        
+        #sorteia tempo de carga
+        tempo = self.pert(tempo_o, tempo_m, tempo_p, 4)
 
+        return tempo
+
+    
+    def sorteia_descarga(self, tempo_o, tempo_m, tempo_p):
+
+        # tempo de manobra + planejamento
+        tempo = 45
+
+        #sorteia tempo de descarga
+        tempo = self.pert(tempo_o, tempo_m, tempo_p, 4)
+    
+        return tempo
 
 if __name__ == "__main__":
     s = Simulacao()
     
     print(s.inicia_pedido())
 
-    # while len(a) < 100:
-    #     a.append(s.inicia_pedido())
-
-    # print(a)
-    # import json
-
-    # with open("cenario3.json", "r", encoding="utf-8") as f_json:
-    #     dados = json.load(f_json)
-    
-    # m = Metricas(dados["info"]["prazo"], dados["info"]["vlr_multa"], dados["info"]["vlr_contrato"])
-
-
-    # cenarios = f.simular_fases(qtde_simulacoes=100000, prep=dados["prep"], fund=dados["fund"], fundA=dados["fundA"], fundB=dados["fundB"],
-    #               laje=dados["laje"], alvenaria=dados["alvenaria"], acab_interno=dados["acab_interno"], pint=dados["pint"],
-    #               pintA=dados["pintA"], pintB=dados["pintB"])
-
-    # cenarios, multa_media, prob_preju, (j, k) = m.calcula(cenarios)
-
-    # c = 0
-    # print("----------------------------------------------------------------")
-    # for i in cenarios:
-    #     print(f"Simulação {c:2}: Duração total: {i[0]:8} dias | " +
-    #                 f"Custo total: R$ {i[1]:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.') +
-    #                 f"| {dados['info']['vlr_contrato'] - i[1]:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
-    #     c+=1
-
-    # print("----------------------------------------------------------------")
-    # print(f"Multa media: R$ {multa_media:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.') + f" ({j} cenarios de {len(cenarios)})")
-    # print(f"Considerado viavel pela diretoria de finanças da empresa: {dados['info']['mult_media'] <= multa_media}")
-    # print(f"Probabilidade de prejuizo: {prob_preju} ({k} cenarios de {len(cenarios)})")
-
-    # m.plotar_histogramas_cenarios(cenarios=cenarios, salvar=True)
+    while len(a) < 100:
+        a.append(s.inicia_pedido())
